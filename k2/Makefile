@@ -4,11 +4,10 @@ CA65 := $(CC65_PATH)/bin/ca65
 LD65 := $(CC65_PATH)/bin/ld65
 OUTDIR := build
 
-SRC := $(wildcard *.c)
-
-ASSEMBLY := $(OUTDIR)/$(SRC:.c=.s)
-OBJECT := $(OUTDIR)/$(SRC:.c=.o)
-TARGET := $(OUTDIR)/$(SRC:.c=.nes)
+SOURCES := $(wildcard *.c)
+ASSEMBLIES := $(SOURCES:%.c=$(OUTDIR)/%.s)
+OBJECTS := $(SOURCES:%.c=$(OUTDIR)/%.o)
+TARGET := $(OUTDIR)/k2.nes
 
 CA65_INC := $(CC65_PATH)/include
 CC65_INC := $(CC65_PATH)/include
@@ -22,24 +21,26 @@ $(OUTDIR):
 	mkdir -p $(OUTDIR)
 
 # Compile C to assembly
-$(ASSEMBLY): $(SRC) | $(OUTDIR)
+$(OUTDIR)/%.s: %.c | $(OUTDIR)
 	$(CC65) -t nes --include-dir $(CC65_INC) $< -o $@
 
 # Assemble to object file
-$(OBJECT): $(ASSEMBLY)
+$(OUTDIR)/%.o: $(OUTDIR)/%.s
 	$(CA65) -t nes --include-dir $(CA65_INC) $< -o $@
 
-# Link object file to create NES file
-$(TARGET): $(OBJECT)
-	$(LD65) -C $(LD65_CFG)/nes.cfg -o $@ $< $(LD65_LIB)/nes.lib
+# Link object files to create NES file
+$(TARGET): $(OBJECTS)
+	$(LD65) -C $(LD65_CFG)/nes.cfg -o $@ $^ $(LD65_LIB)/nes.lib
 
 all: $(TARGET)
 
 run: $(TARGET)
 	F:\Downloads\punes-0.110-x86_64-win-d3d9\punes64.exe $(TARGET)
-	echo Finishded
+	echo Finished
 
 clean:
-	rm -f $(ASSEMBLY) $(OBJECT) $(TARGET)
+	rm -f $(ASSEMBLIES) $(OBJECTS) $(TARGET)
 
-.PHONY: all clean
+.PHONY: all run clean
+
+.PRECIOUS: $(OUTDIR)/%.s
