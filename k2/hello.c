@@ -1,4 +1,5 @@
 #include <conio.h>
+#include <nes.h>
 
 int main(void)
 {
